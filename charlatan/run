@@ -1,0 +1,51 @@
+#!/usr/bin/env clojure
+;; vim: ft=clojure
+
+(require '[clojure.string :as str])
+
+(defn random-character
+  []
+  (if (< (rand) 0.25)
+    \space
+    (->> (range 0x0021 0x007F)
+         (map char)
+         ;; HACK to workaround not having a JSON library at my disposal
+         (remove #{\\ \"})
+         rand-nth)))
+
+(defn random-line
+  []
+  (apply str (repeatedly (rand-int 80) random-character)))
+
+(defn write-poem
+  "The charlatan claims to be a poet, but is not. When backed into a corner and
+   instructed to write a poem, the charlatan simply spews a few lines of random
+   characters."
+  []
+  (let [title (apply str (repeatedly (inc (rand-int 30)) random-character))
+        poem  (str/join "\\n" (repeatedly 3 random-line))]
+    (format "{\"title\": \"%s\", \"content\": \"%s\"}"
+            title
+            poem)))
+
+(defn critique-poem
+  "To avoid drawing the ire of its fellow poets, the charlatan gives every poem
+   the highest of marks (1)."
+  [poem]
+  "{\"score\": 1.0}")
+
+(defn study-poem
+  "The charlatan learns nothing from all the poetry it has the opportunity to
+   study. So, `study` is a no-op."
+  [poem]
+  "{\"success\": true}")
+
+(let [[cmd & args] *command-line-args*]
+  (case cmd
+    "--write"    (println (write-poem))
+    "--critique" (println (apply critique-poem args))
+    "--study"    (println (apply study-poem args))
+    (binding [*out* *err*]
+      (println "Invalid args.")
+      (System/exit 1))))
+
